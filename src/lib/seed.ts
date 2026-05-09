@@ -50,9 +50,9 @@ const SEED_DECKS: SeedDeck[] = [
       "Series B led by Khosla at $180M post in Q3. Now profitable on operating margin.",
     daysAgo: 320,
     scores: {
-      technology_readiness: { score: 9, rationale: "TRL 8, four sites operating, no novel chemistry risk." },
+      product_readiness: { score: 9, rationale: "TRL 8, four sites operating, no novel chemistry risk." },
       financial_viability: { score: 8, rationale: "Tolling agreements lock 70% of revenue. IRR ~22% modeled." },
-      carbon_impact: { score: 7, rationale: "Direct grid displacement of peakers; ~85k tCO2/yr per site." },
+      mission_impact: { score: 7, rationale: "Direct grid displacement of peakers; ~85k tCO2/yr per site." },
       regulatory_risk: { score: 9, rationale: "ERCOT does not require federal interconnection; permits in hand." },
       market_timing: { score: 9, rationale: "AI datacenter load growth makes peaker displacement urgent." },
       scalability: { score: 8, rationale: "Standardized 200MWh blocks; 14 sites in pipeline." },
@@ -93,9 +93,9 @@ const SEED_DECKS: SeedDeck[] = [
       "Wound down Q1 — couldn't scale stack manufacturing. Iron-flow stack costs stayed 2.3x lithium.",
     daysAgo: 540,
     scores: {
-      technology_readiness: { score: 6, rationale: "TRL 6. One pilot site, 8MWh." },
+      product_readiness: { score: 6, rationale: "TRL 6. One pilot site, 8MWh." },
       financial_viability: { score: 6, rationale: "Cost curve depends on stack manufacturing scaling." },
-      carbon_impact: { score: 9, rationale: "Iron-flow eliminates lithium supply chain risk." },
+      mission_impact: { score: 9, rationale: "Iron-flow eliminates lithium supply chain risk." },
       regulatory_risk: { score: 8, rationale: "No novel siting approvals required." },
       market_timing: { score: 8, rationale: "Long-duration storage RFPs accelerating." },
       scalability: { score: 7, rationale: "Modular stack design, but manufacturing untested at scale." },
@@ -135,9 +135,9 @@ const SEED_DECKS: SeedDeck[] = [
     outcome_evidence: "Series A from Energy Impact Partners at $40M post.",
     daysAgo: 220,
     scores: {
-      technology_readiness: { score: 9, rationale: "Standard residential rooftop, no tech risk." },
+      product_readiness: { score: 9, rationale: "Standard residential rooftop, no tech risk." },
       financial_viability: { score: 8, rationale: "Customer acquisition cost dropping; LTV/CAC at 3.4." },
-      carbon_impact: { score: 7, rationale: "Per-customer offset is meaningful but bounded." },
+      mission_impact: { score: 7, rationale: "Per-customer offset is meaningful but bounded." },
       regulatory_risk: { score: 6, rationale: "Net metering policy risk in three of their states." },
       market_timing: { score: 8, rationale: "IRA tax credits driving adoption." },
       scalability: { score: 8, rationale: "Channel partners replicate the playbook in new states." },
@@ -177,9 +177,9 @@ const SEED_DECKS: SeedDeck[] = [
     outcome_evidence: "Series B at $220M post. PPA contracts hit $40M ARR.",
     daysAgo: 410,
     scores: {
-      technology_readiness: { score: 9, rationale: "Utility-scale, mature tech." },
+      product_readiness: { score: 9, rationale: "Utility-scale, mature tech." },
       financial_viability: { score: 9, rationale: "PPA-secured revenue, IRR 18%." },
-      carbon_impact: { score: 8, rationale: "240MW displaces ~340k tCO2/yr." },
+      mission_impact: { score: 8, rationale: "240MW displaces ~340k tCO2/yr." },
       regulatory_risk: { score: 7, rationale: "Federal land permitting cleared." },
       market_timing: { score: 8, rationale: "Hyperscaler PPA demand at all-time high." },
       scalability: { score: 8, rationale: "Two more sites permitted; capital-intensive." },
@@ -218,9 +218,9 @@ const SEED_DECKS: SeedDeck[] = [
     outcome_evidence: "Acquired by Iberdrola for $90M.",
     daysAgo: 360,
     scores: {
-      technology_readiness: { score: 9, rationale: "Tracker mounts, off-the-shelf." },
+      product_readiness: { score: 9, rationale: "Tracker mounts, off-the-shelf." },
       financial_viability: { score: 7, rationale: "Margins thin but volume real." },
-      carbon_impact: { score: 8, rationale: "Pan-European deployment scale." },
+      mission_impact: { score: 8, rationale: "Pan-European deployment scale." },
       regulatory_risk: { score: 7, rationale: "EU Green Deal alignment." },
       market_timing: { score: 8, rationale: "EU energy independence post-Ukraine." },
       scalability: { score: 8, rationale: "Iberian build pipeline > 600MW." },
@@ -260,9 +260,9 @@ const SEED_DECKS: SeedDeck[] = [
     outcome_evidence: "Down round Q2; primary off-taker walked. Distressed sale to Linde.",
     daysAgo: 480,
     scores: {
-      technology_readiness: { score: 7, rationale: "Alkaline electrolyzer, TRL 7-8." },
+      product_readiness: { score: 7, rationale: "Alkaline electrolyzer, TRL 7-8." },
       financial_viability: { score: 6, rationale: "Off-taker contract NDA, but LCOH ~$5/kg." },
-      carbon_impact: { score: 9, rationale: "Direct steel decarbonization." },
+      mission_impact: { score: 9, rationale: "Direct steel decarbonization." },
       regulatory_risk: { score: 7, rationale: "EU Hydrogen Bank backstop." },
       market_timing: { score: 7, rationale: "Steel mandate timeline aggressive." },
       scalability: { score: 8, rationale: "Modular 100MW stacks." },
@@ -301,9 +301,9 @@ const SEED_DECKS: SeedDeck[] = [
     outcome_evidence: "Lost Equinor offtake in late-stage negotiation. Cash burn outpaced bridge.",
     daysAgo: 280,
     scores: {
-      technology_readiness: { score: 7, rationale: "PEM electrolyzer, validated stack." },
+      product_readiness: { score: 7, rationale: "PEM electrolyzer, validated stack." },
       financial_viability: { score: 5, rationale: "Power-cost-coupled — exposed if hydro spot drops." },
-      carbon_impact: { score: 9, rationale: "100% renewable input." },
+      mission_impact: { score: 9, rationale: "100% renewable input." },
       regulatory_risk: { score: 7, rationale: "Norwegian energy export rules pending." },
       market_timing: { score: 8, rationale: "European steel offtake demand." },
       scalability: { score: 7, rationale: "Limited by hydropower siting." },
@@ -342,9 +342,9 @@ const SEED_DECKS: SeedDeck[] = [
     decision_notes: "Need partner sign-off on check size. Pending.",
     daysAgo: 38,
     scores: {
-      technology_readiness: { score: 8, rationale: "Floating platform, TRL 8." },
+      product_readiness: { score: 8, rationale: "Floating platform, TRL 8." },
       financial_viability: { score: 8, rationale: "PPA pricing locked at $78/MWh." },
-      carbon_impact: { score: 9, rationale: "800MW displaces gas baseload." },
+      mission_impact: { score: 9, rationale: "800MW displaces gas baseload." },
       regulatory_risk: { score: 6, rationale: "Federal offshore wind permitting in flux." },
       market_timing: { score: 8, rationale: "BOEM lease auctions accelerating." },
       scalability: { score: 8, rationale: "Floating tech opens deeper sites." },
@@ -382,9 +382,9 @@ const SEED_DECKS: SeedDeck[] = [
     decision_notes: "Waiting on Climeworks compare-and-contrast diligence.",
     daysAgo: 31,
     scores: {
-      technology_readiness: { score: 5, rationale: "TRL 5, lab pilot only." },
+      product_readiness: { score: 5, rationale: "TRL 5, lab pilot only." },
       financial_viability: { score: 5, rationale: "Cost per ton ~$600. Needs to hit $200." },
-      carbon_impact: { score: 10, rationale: "Permanent geological storage." },
+      mission_impact: { score: 10, rationale: "Permanent geological storage." },
       regulatory_risk: { score: 8, rationale: "Iceland subsurface storage approved." },
       market_timing: { score: 8, rationale: "Microsoft and Frontier offtake demand strong." },
       scalability: { score: 6, rationale: "Sorbent regeneration unproven at scale." },
@@ -423,9 +423,9 @@ const SEED_DECKS: SeedDeck[] = [
     decision_notes: "Geothermal is outside our thesis right now.",
     daysAgo: 95,
     scores: {
-      technology_readiness: { score: 7, rationale: "EGS, two pilot wells producing." },
+      product_readiness: { score: 7, rationale: "EGS, two pilot wells producing." },
       financial_viability: { score: 7, rationale: "Power costs competitive in West." },
-      carbon_impact: { score: 9, rationale: "Baseload renewable." },
+      mission_impact: { score: 9, rationale: "Baseload renewable." },
       regulatory_risk: { score: 7, rationale: "Subsurface rights cleared." },
       market_timing: { score: 8, rationale: "DOE support increasing." },
       scalability: { score: 7, rationale: "Drilling cost curve is the lever." },
@@ -463,9 +463,9 @@ const SEED_DECKS: SeedDeck[] = [
     decision_notes: "CCUS outside our active thesis.",
     daysAgo: 130,
     scores: {
-      technology_readiness: { score: 8, rationale: "Post-combustion capture, TRL 8." },
+      product_readiness: { score: 8, rationale: "Post-combustion capture, TRL 8." },
       financial_viability: { score: 7, rationale: "45Q tax credit closes economics." },
-      carbon_impact: { score: 8, rationale: "Direct emitter capture." },
+      mission_impact: { score: 8, rationale: "Direct emitter capture." },
       regulatory_risk: { score: 7, rationale: "45Q monetization process clear." },
       market_timing: { score: 8, rationale: "Industrial decarbonization mandates rising." },
       scalability: { score: 8, rationale: "Modular skid design." },
@@ -504,9 +504,9 @@ const SEED_DECKS: SeedDeck[] = [
     decision_notes: "First call done. Want to talk to design partner.",
     daysAgo: 5,
     scores: {
-      technology_readiness: { score: 7, rationale: "ML-based grid optimization, deployed at one TSO." },
+      product_readiness: { score: 7, rationale: "ML-based grid optimization, deployed at one TSO." },
       financial_viability: { score: 6, rationale: "Pre-revenue, but TSO contract close." },
-      carbon_impact: { score: 7, rationale: "Indirect; reduces curtailment." },
+      mission_impact: { score: 7, rationale: "Indirect; reduces curtailment." },
       regulatory_risk: { score: 7, rationale: "EU grid code alignment in progress." },
       market_timing: { score: 8, rationale: "Curtailment is a billion-euro problem." },
       scalability: { score: 8, rationale: "Software margin profile." },
@@ -545,9 +545,9 @@ const SEED_DECKS: SeedDeck[] = [
     outcome_evidence: "Wound down. Bought a fleet of chargers, couldn't drive utilization.",
     daysAgo: 200,
     scores: {
-      technology_readiness: { score: 8, rationale: "DC fast-charging, off-the-shelf." },
+      product_readiness: { score: 8, rationale: "DC fast-charging, off-the-shelf." },
       financial_viability: { score: 5, rationale: "Capex-heavy, utilization unproven." },
-      carbon_impact: { score: 6, rationale: "Indirect via EV adoption." },
+      mission_impact: { score: 6, rationale: "Indirect via EV adoption." },
       regulatory_risk: { score: 7, rationale: "NEVI program funding." },
       market_timing: { score: 7, rationale: "EV adoption mid-curve." },
       scalability: { score: 6, rationale: "Real-estate intensive." },
@@ -585,9 +585,9 @@ const SEED_DECKS: SeedDeck[] = [
     decision_notes: "Cost trajectory not credible.",
     daysAgo: 75,
     scores: {
-      technology_readiness: { score: 4, rationale: "TRL 4. Lab benchtop only." },
+      product_readiness: { score: 4, rationale: "TRL 4. Lab benchtop only." },
       financial_viability: { score: 4, rationale: "$15/gal projected at scale." },
-      carbon_impact: { score: 8, rationale: "Net-negative aviation fuel pathway." },
+      mission_impact: { score: 8, rationale: "Net-negative aviation fuel pathway." },
       regulatory_risk: { score: 7, rationale: "SAF mandates support." },
       market_timing: { score: 7, rationale: "SAF demand structurally rising." },
       scalability: { score: 6, rationale: "Gigafactory required." },
@@ -626,9 +626,9 @@ const SEED_DECKS: SeedDeck[] = [
     outcome_evidence: "Series A from Lowercarbon at $50M post; Frontier offtake lifted.",
     daysAgo: 190,
     scores: {
-      technology_readiness: { score: 5, rationale: "TRL 5, novel sorbent." },
+      product_readiness: { score: 5, rationale: "TRL 5, novel sorbent." },
       financial_viability: { score: 6, rationale: "Cost trajectory plausible to $250/ton." },
-      carbon_impact: { score: 10, rationale: "Permanent removal." },
+      mission_impact: { score: 10, rationale: "Permanent removal." },
       regulatory_risk: { score: 8, rationale: "Removal credit registries maturing." },
       market_timing: { score: 8, rationale: "Frontier and Stripe offtake demand." },
       scalability: { score: 7, rationale: "Modular reactor design." },
@@ -667,11 +667,17 @@ export async function ensureDemoUserSeeded(): Promise<UserRow> {
       [DEMO_HASH, "Demo Investor", existing.id],
     );
     targetUserId = existing.id;
-    const count = await pool.query<{ c: string }>(
-      "SELECT COUNT(*)::text AS c FROM decks WHERE user_id = $1",
+    // Reseed if the existing data uses the old (climate-only) score keys.
+    // This lets the v2 sector-agnostic schema land cleanly on first request.
+    const sample = await pool.query<{ analysis_json: string }>(
+      "SELECT analysis_json FROM decks WHERE user_id = $1 LIMIT 1",
       [targetUserId],
     );
-    if (parseInt(count.rows[0].c, 10) > 0) {
+    if (
+      sample.rows[0] &&
+      !sample.rows[0].analysis_json.includes("technology_readiness") &&
+      !sample.rows[0].analysis_json.includes("carbon_impact")
+    ) {
       return (await findUserByEmail(DEMO_EMAIL))!;
     }
   } else {

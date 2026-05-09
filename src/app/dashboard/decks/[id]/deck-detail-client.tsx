@@ -13,6 +13,7 @@ import {
   HelpCircle,
   Leaf,
   Sparkles,
+  Target,
   TrendingUp,
   XCircle,
   AlertTriangle,
@@ -43,12 +44,16 @@ type DeckLite = {
 type Score = { score: number; rationale: string };
 
 const SCORE_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
-  technology_readiness: { label: "Technology Readiness", icon: <Zap className="w-4 h-4" /> },
+  // Current sector-agnostic schema
+  product_readiness: { label: "Product Readiness", icon: <Zap className="w-4 h-4" /> },
   financial_viability: { label: "Financial Viability", icon: <TrendingUp className="w-4 h-4" /> },
-  carbon_impact: { label: "Carbon Impact", icon: <Leaf className="w-4 h-4" /> },
+  mission_impact: { label: "Mission & Impact", icon: <Target className="w-4 h-4" /> },
   regulatory_risk: { label: "Regulatory Risk", icon: <Shield className="w-4 h-4" /> },
   market_timing: { label: "Market Timing", icon: <Globe className="w-4 h-4" /> },
   scalability: { label: "Scalability", icon: <BarChart3 className="w-4 h-4" /> },
+  // Legacy keys (pre-broadening). Rendered if any old decks linger.
+  technology_readiness: { label: "Technology Readiness", icon: <Zap className="w-4 h-4" /> },
+  carbon_impact: { label: "Carbon Impact", icon: <Leaf className="w-4 h-4" /> },
 };
 
 function getScoreColor(score: number): string {

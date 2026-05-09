@@ -208,7 +208,7 @@ export function UploadClient({ isDemo }: { isDemo: boolean }) {
             </h2>
             <p className="text-sm text-muted">
               {phase === "analyzing"
-                ? "Scoring technology readiness, financial viability, carbon impact, regulatory risk, market timing, and scalability."
+                ? "Scoring product readiness, financial viability, mission impact, regulatory risk, market timing, and scalability."
                 : "Linking this evaluation to your investor model."}
             </p>
           </div>
