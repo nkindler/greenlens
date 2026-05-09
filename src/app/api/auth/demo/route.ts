@@ -12,6 +12,10 @@ export async function POST() {
 export async function GET(req: Request) {
   const user = await ensureDemoUserSeeded();
   await setSession(user.id);
-  const url = new URL("/dashboard", req.url);
-  return NextResponse.redirect(url, 303);
+  // Behind Railway's proxy req.url uses the internal listen URL.
+  // Reconstruct the public origin from the forwarded headers.
+  const h = req.headers;
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "deckranker.com";
+  return NextResponse.redirect(`${proto}://${host}/dashboard`, 303);
 }
