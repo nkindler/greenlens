@@ -120,13 +120,13 @@ export default async function Landing() {
               <div className="mt-4 grid grid-cols-1 gap-3">
                 <BlindspotPreview
                   kind="missed"
-                  title="You pass on Solar PV winners"
-                  detail="2 Solar PV deals you passed on later succeeded. Reconsider your thesis here."
+                  title="You pass on solo-founder consumer apps"
+                  detail="3 deals you passed on later succeeded. The model flagged each as a likely fit you declined."
                 />
                 <BlindspotPreview
                   kind="trap"
-                  title="Green Hydrogen is a recurring loss"
-                  detail="2 hydrogen investments failed. Pattern: high carbon score paired with weak financials."
+                  title="Hardware-first plays are a recurring loss"
+                  detail="2 hardware investments failed. Pattern: high TAM score paired with capex-heavy unit economics."
                 />
               </div>
             </div>
@@ -175,7 +175,7 @@ export default async function Landing() {
             </span>
           </div>
           <p className="text-xs text-muted">
-            Pattern intelligence for the climate-tech investor.
+            Pattern intelligence for the modern investor. Any sector, any stage.
           </p>
         </div>
       </footer>
