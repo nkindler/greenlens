@@ -177,7 +177,7 @@ export function UploadClient({ isDemo }: { isDemo: boolean }) {
                 <p className="text-base font-medium mb-1">
                   {fileName ?? "Drop a deal document here"}
                 </p>
-                <p className="text-sm text-muted">PDF, TXT, DOC — pitch decks, term sheets, memos</p>
+                <p className="text-sm text-muted">PDF, TXT, DOC. Pitch decks, term sheets, memos.</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -222,7 +222,7 @@ export function UploadClient({ isDemo }: { isDemo: boolean }) {
 
         {isDemo && !loading && (
           <p className="text-xs text-muted mt-8 text-center italic">
-            Demo session — your upload will join the demo investor&apos;s portfolio for this session.
+            Demo session. Your upload will join the demo investor&apos;s portfolio for this session.
           </p>
         )}
       </main>

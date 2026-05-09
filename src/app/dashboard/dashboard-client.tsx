@@ -114,6 +114,15 @@ export function DashboardClient({
     return decks.filter((d) => d.decision === filter);
   }, [decks, filter]);
 
+  function jumpToFilter(key: (typeof FILTERS)[number]["key"]) {
+    setFilter(key);
+    if (typeof document !== "undefined") {
+      document
+        .getElementById("portfolio")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/");
@@ -133,8 +142,9 @@ export function DashboardClient({
               Deck<span className="text-accent">Ranker</span>
             </span>
             {user.isDemo && (
-              <span className="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
-                Demo
+              <span className="ml-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/30 inline-flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                Demo investor
               </span>
             )}
           </Link>
@@ -194,7 +204,7 @@ export function DashboardClient({
                 hint={
                   model.hitRate == null
                     ? "Mark outcomes to score"
-                    : `${model.invested} invested · ${model.knownOutcomes} resolved`
+                    : `${model.knownOutcomes} resolved outcomes`
                 }
               />
               <Metric
@@ -219,9 +229,30 @@ export function DashboardClient({
               />
             </div>
             <div className="mt-5 grid grid-cols-3 gap-3">
-              <Pill label="Invested" count={model.invested} icon={<CheckCircle className="w-3.5 h-3.5" />} tone="accent" />
-              <Pill label="Passed" count={model.passed} icon={<XCircle className="w-3.5 h-3.5" />} tone="red" />
-              <Pill label="Looking" count={model.looking} icon={<Clock className="w-3.5 h-3.5" />} tone="blue" />
+              <Pill
+                label="Invested"
+                count={model.invested}
+                icon={<CheckCircle className="w-3.5 h-3.5" />}
+                tone="accent"
+                active={filter === "invested"}
+                onClick={() => jumpToFilter("invested")}
+              />
+              <Pill
+                label="Passed"
+                count={model.passed}
+                icon={<XCircle className="w-3.5 h-3.5" />}
+                tone="red"
+                active={filter === "passed"}
+                onClick={() => jumpToFilter("passed")}
+              />
+              <Pill
+                label="Looking"
+                count={model.looking}
+                icon={<Clock className="w-3.5 h-3.5" />}
+                tone="blue"
+                active={filter === "looking"}
+                onClick={() => jumpToFilter("looking")}
+              />
             </div>
           </div>
         </section>
@@ -267,7 +298,7 @@ export function DashboardClient({
         </section>
 
         {/* Portfolio */}
-        <section>
+        <section id="portfolio">
           <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <FileText className="w-4 h-4 text-accent" />
@@ -401,23 +432,36 @@ function Pill({
   count,
   icon,
   tone,
+  active,
+  onClick,
 }: {
   label: string;
   count: number;
   icon: React.ReactNode;
   tone: "accent" | "red" | "blue";
+  active?: boolean;
+  onClick?: () => void;
 }) {
-  const cls = {
-    accent: "bg-accent/10 text-accent border-accent/30",
-    red: "bg-red-500/10 text-red-400 border-red-500/20",
-    blue: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  const idle = {
+    accent: "bg-accent/10 text-accent border-accent/30 hover:bg-accent/15",
+    red: "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/15",
+    blue: "bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/15",
+  }[tone];
+  const activeCls = {
+    accent: "bg-accent/25 text-accent border-accent/60 ring-2 ring-accent/30",
+    red: "bg-red-500/20 text-red-400 border-red-500/40 ring-2 ring-red-500/20",
+    blue: "bg-blue-500/20 text-blue-400 border-blue-500/40 ring-2 ring-blue-500/20",
   }[tone];
   return (
-    <div className={`rounded-lg border px-3 py-2 ${cls} flex items-center gap-2`}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-lg border px-3 py-2 flex items-center gap-2 transition-all text-left ${active ? activeCls : idle}`}
+    >
       {icon}
       <span className="text-xs uppercase tracking-wider">{label}</span>
       <span className="ml-auto font-semibold tabular-nums">{count}</span>
-    </div>
+    </button>
   );
 }
 

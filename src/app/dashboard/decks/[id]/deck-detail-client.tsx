@@ -238,7 +238,7 @@ export function DeckDetailClient({
             />
           </div>
           <p className="text-xs text-muted mt-2 italic">
-            {prediction.label} — adjusted for {deck.founder_profile ?? "founder profile"} bias and stage trend.
+            {prediction.label}. Adjusted for {deck.founder_profile ?? "founder profile"} bias and stage trend.
           </p>
         </div>
 
@@ -387,10 +387,10 @@ export function DeckDetailClient({
                 const losers = similar.filter((s) => s.outcome === "failed").length;
                 if (winners === 0 && losers === 0) return "Outcomes pending across this cohort.";
                 if (winners > losers)
-                  return `In this cluster, ${winners} succeeded and ${losers} failed — your priors here are working.`;
+                  return `In this cluster, ${winners} succeeded and ${losers} failed. Your priors here are working.`;
                 if (losers > winners)
-                  return `In this cluster, ${losers} failed and ${winners} succeeded — caution on this pattern.`;
-                return `In this cluster, outcomes are split ${winners}/${losers} — read the differences carefully.`;
+                  return `In this cluster, ${losers} failed and ${winners} succeeded. Caution on this pattern.`;
+                return `In this cluster, outcomes are split ${winners}/${losers}. Read the differences carefully.`;
               })()}
             </p>
           </div>
@@ -501,7 +501,7 @@ export function DeckDetailClient({
 
         {isDemo && (
           <p className="text-xs text-muted text-center py-4 italic">
-            Demo data — outcomes are illustrative for the presentation.
+            Demo data. Outcomes are illustrative for the presentation.
           </p>
         )}
       </main>
