@@ -1,4 +1,4 @@
-import { getDb, type DeckRow } from "./db";
+import { getPool, ready, type DeckRow } from "./db";
 
 export type InvestorModel = {
   totalDecks: number;
@@ -6,14 +6,14 @@ export type InvestorModel = {
   invested: number;
   passed: number;
   looking: number;
-  hitRate: number | null; // succeeded / (succeeded + failed) of invested
-  missedWins: number; // passed but succeeded
-  trapsTriggered: number; // invested but failed
+  hitRate: number | null;
+  missedWins: number;
+  trapsTriggered: number;
   knownOutcomes: number;
-  modelAccuracy: number; // 0..1, simulated alignment with hit rate + scope
-  modelConfidence: number; // 0..1, simulated based on sample size
+  modelAccuracy: number;
+  modelConfidence: number;
   trainingDataPoints: number;
-  trainedAt: number; // ms epoch
+  trainedAt: number;
 };
 
 export type Blindspot = {
@@ -36,17 +36,25 @@ export type SimilarDeck = {
   similarity: number;
 };
 
-export function listUserDecks(userId: number): DeckRow[] {
-  return getDb()
-    .prepare("SELECT * FROM decks WHERE user_id = ? ORDER BY created_at DESC")
-    .all(userId) as DeckRow[];
+export async function listUserDecks(userId: number): Promise<DeckRow[]> {
+  await ready();
+  const r = await getPool().query<DeckRow>(
+    "SELECT * FROM decks WHERE user_id = $1 ORDER BY created_at DESC",
+    [userId],
+  );
+  return r.rows;
 }
 
-export function getDeck(userId: number, deckId: number): DeckRow | null {
-  const row = getDb()
-    .prepare("SELECT * FROM decks WHERE id = ? AND user_id = ?")
-    .get(deckId, userId) as DeckRow | undefined;
-  return row ?? null;
+export async function getDeck(
+  userId: number,
+  deckId: number,
+): Promise<DeckRow | null> {
+  await ready();
+  const r = await getPool().query<DeckRow>(
+    "SELECT * FROM decks WHERE id = $1 AND user_id = $2",
+    [deckId, userId],
+  );
+  return r.rows[0] ?? null;
 }
 
 export function computeModel(decks: DeckRow[]): InvestorModel {
@@ -64,8 +72,6 @@ export function computeModel(decks: DeckRow[]): InvestorModel {
       : null;
 
   const knownOutcomes = decks.filter((d) => d.outcome !== "unknown").length;
-  // Simulated model metrics: confidence scales with sample size, accuracy
-  // is a blended view of hit rate + recommendation alignment.
   const trainingDataPoints = knownOutcomes * 14 + decks.length * 3 + 41;
   const sampleConfidence = Math.min(1, totalDecks / 20);
   const outcomeConfidence = Math.min(1, knownOutcomes / 8);
@@ -87,7 +93,6 @@ export function computeModel(decks: DeckRow[]): InvestorModel {
     Math.min(0.97, outcomeBoost * (0.85 + 0.15 * outcomeConfidence)),
   );
 
-  // Stable but ever-recent "trained at" — within last 24 minutes
   const seed = decks.reduce(
     (acc, d) => acc + (d.created_at % 1000),
     invested.length * 7 + passed.length * 11,
@@ -118,7 +123,6 @@ export function computeBlindspots(decks: DeckRow[]): Blindspot[] {
   const invested = decks.filter((d) => d.decision === "invested");
   const looking = decks.filter((d) => d.decision === "looking");
 
-  // 1. Missed wins — group passed/succeeded by tech type
   const missedByTech = new Map<string, DeckRow[]>();
   for (const d of passed) {
     if (d.outcome === "succeeded" && d.technology_type) {
@@ -139,7 +143,6 @@ export function computeBlindspots(decks: DeckRow[]): Blindspot[] {
     }
   }
 
-  // 2. Value traps — invested/failed by tech type
   const trapByTech = new Map<string, DeckRow[]>();
   for (const d of invested) {
     if (d.outcome === "failed" && d.technology_type) {
@@ -153,14 +156,13 @@ export function computeBlindspots(decks: DeckRow[]): Blindspot[] {
         id: `trap_${tech.replace(/\s+/g, "_")}`,
         kind: "value_trap",
         title: `${tech} is a recurring loss`,
-        detail: `${ds.length} ${tech} investment${ds.length > 1 ? "s have" : " has"} failed in your portfolio. Common pattern: high carbon-impact score paired with weak financial-viability — exactly the trap that hit ${ds[0].company_name}.`,
+        detail: `${ds.length} ${tech} investment${ds.length > 1 ? "s have" : " has"} failed in your portfolio. Common pattern: high carbon-impact score paired with weak financial-viability, exactly the trap that hit ${ds[0].company_name}.`,
         severity: ds.length >= 2 ? "high" : "medium",
         evidenceDeckIds: ds.map((d) => d.id),
       });
     }
   }
 
-  // 3. Thesis drift — score above 7 but passed
   const driftCandidates = passed.filter(
     (d) => (d.overall_score ?? 0) >= 7.5 && d.outcome !== "failed",
   );
@@ -175,7 +177,6 @@ export function computeBlindspots(decks: DeckRow[]): Blindspot[] {
     });
   }
 
-  // 4. Decision lag
   const lagged = looking.filter(
     (d) => Date.now() - d.created_at > 1000 * 60 * 60 * 24 * 21,
   );

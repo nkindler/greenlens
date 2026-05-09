@@ -1,63 +1,81 @@
-import Database from "better-sqlite3";
-import fs from "fs";
-import path from "path";
+import { Pool, types } from "pg";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const DB_PATH = path.join(DATA_DIR, "deckranker.db");
-
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+// Return BIGINT (oid 20) and NUMERIC (oid 1700) as JS numbers. Safe here:
+// our BIGINT columns hold ms epoch timestamps and serial IDs, both well
+// within Number.MAX_SAFE_INTEGER for the foreseeable future.
+types.setTypeParser(20, (v) => (v === null ? null : parseInt(v, 10)));
 
 declare global {
   // eslint-disable-next-line no-var
-  var __dr_db: Database.Database | undefined;
+  var __dr_pool: Pool | undefined;
+  // eslint-disable-next-line no-var
+  var __dr_ready: Promise<void> | undefined;
 }
 
-function init(db: Database.Database) {
-  db.pragma("journal_mode = WAL");
-  db.pragma("foreign_keys = ON");
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      name TEXT,
-      is_demo INTEGER DEFAULT 0,
-      created_at INTEGER NOT NULL
+function buildPool(): Pool {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error(
+      "DATABASE_URL is not set. Set it in your env (Railway provides it automatically when a Postgres service is attached). Local dev: postgres://postgres:postgres@localhost:5432/deckranker",
     );
-
-    CREATE TABLE IF NOT EXISTS decks (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      company_name TEXT NOT NULL,
-      technology_type TEXT,
-      location TEXT,
-      investment_size TEXT,
-      stage TEXT,
-      founder_profile TEXT,
-      geography TEXT,
-      overall_score REAL,
-      recommendation TEXT,
-      analysis_json TEXT NOT NULL,
-      decision TEXT NOT NULL DEFAULT 'looking',
-      decision_at INTEGER,
-      decision_notes TEXT,
-      outcome TEXT NOT NULL DEFAULT 'unknown',
-      outcome_updated_at INTEGER,
-      outcome_evidence TEXT,
-      created_at INTEGER NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS idx_decks_user ON decks(user_id);
-    CREATE INDEX IF NOT EXISTS idx_decks_decision ON decks(user_id, decision);
-  `);
-}
-
-export function getDb(): Database.Database {
-  if (!global.__dr_db) {
-    const db = new Database(DB_PATH);
-    init(db);
-    global.__dr_db = db;
   }
-  return global.__dr_db;
+  // Railway internal proxy is plain TCP. External and most managed
+  // Postgres services require SSL; default to allowing self-signed.
+  const isLocal = /localhost|127\.0\.0\.1/.test(url);
+  const ssl = isLocal ? false : { rejectUnauthorized: false };
+  return new Pool({ connectionString: url, ssl, max: 10 });
+}
+
+export function getPool(): Pool {
+  if (!global.__dr_pool) {
+    global.__dr_pool = buildPool();
+  }
+  return global.__dr_pool;
+}
+
+const SCHEMA = `
+  CREATE TABLE IF NOT EXISTS users (
+    id BIGSERIAL PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    name TEXT,
+    is_demo INTEGER DEFAULT 0,
+    created_at BIGINT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS decks (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    company_name TEXT NOT NULL,
+    technology_type TEXT,
+    location TEXT,
+    investment_size TEXT,
+    stage TEXT,
+    founder_profile TEXT,
+    geography TEXT,
+    overall_score DOUBLE PRECISION,
+    recommendation TEXT,
+    analysis_json TEXT NOT NULL,
+    decision TEXT NOT NULL DEFAULT 'looking',
+    decision_at BIGINT,
+    decision_notes TEXT,
+    outcome TEXT NOT NULL DEFAULT 'unknown',
+    outcome_updated_at BIGINT,
+    outcome_evidence TEXT,
+    created_at BIGINT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_decks_user ON decks(user_id);
+  CREATE INDEX IF NOT EXISTS idx_decks_decision ON decks(user_id, decision);
+`;
+
+// Lazy schema init; idempotent. Called from query sites via `await ready()`.
+export async function ready(): Promise<void> {
+  if (!global.__dr_ready) {
+    const pool = getPool();
+    global.__dr_ready = pool.query(SCHEMA).then(() => {});
+  }
+  return global.__dr_ready;
 }
 
 export type DeckRow = {

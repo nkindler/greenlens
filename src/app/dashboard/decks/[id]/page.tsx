@@ -22,10 +22,10 @@ export default async function DeckDetail({
   const deckId = parseInt(id, 10);
   if (!Number.isFinite(deckId)) notFound();
 
-  const deck = getDeck(user.id, deckId);
+  const deck = await getDeck(user.id, deckId);
   if (!deck) notFound();
 
-  const allDecks = listUserDecks(user.id);
+  const allDecks = await listUserDecks(user.id);
   const similar: SimilarDeck[] = findSimilar(deck, allDecks, 4);
 
   let analysis: Record<string, unknown> = {};

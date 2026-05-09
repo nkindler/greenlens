@@ -1,17 +1,29 @@
 import { cookies } from "next/headers";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
-import { getDb, type UserRow } from "./db";
+import { getPool, ready, type UserRow } from "./db";
 
-const SESSION_SECRET =
-  process.env.SESSION_SECRET ||
-  "deckranker-dev-secret-replace-in-prod-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const COOKIE_NAME = "dr_session";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 30;
+const DEV_FALLBACK_SECRET =
+  "deckranker-dev-secret-replace-in-prod-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+function getSessionSecret(): string {
+  const s = process.env.SESSION_SECRET;
+  if (!s || s.length < 32) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "SESSION_SECRET is not set or is too short (min 32 chars). Set it in your production env. Refusing to start with a guessable session secret.",
+      );
+    }
+    return DEV_FALLBACK_SECRET;
+  }
+  return s;
+}
 
 function sign(value: string): string {
   const mac = crypto
-    .createHmac("sha256", SESSION_SECRET)
+    .createHmac("sha256", getSessionSecret())
     .update(value)
     .digest("base64url");
   return `${value}.${mac}`;
@@ -23,7 +35,7 @@ function verify(signed: string): string | null {
   const value = signed.slice(0, idx);
   const mac = signed.slice(idx + 1);
   const expected = crypto
-    .createHmac("sha256", SESSION_SECRET)
+    .createHmac("sha256", getSessionSecret())
     .update(value)
     .digest("base64url");
   if (mac.length !== expected.length) return null;
@@ -60,11 +72,12 @@ export async function getCurrentUser(): Promise<UserRow | null> {
   if (!userIdStr) return null;
   const userId = parseInt(userIdStr, 10);
   if (!Number.isFinite(userId)) return null;
-  const db = getDb();
-  const user = db
-    .prepare("SELECT * FROM users WHERE id = ?")
-    .get(userId) as UserRow | undefined;
-  return user ?? null;
+  await ready();
+  const r = await getPool().query<UserRow>(
+    "SELECT * FROM users WHERE id = $1",
+    [userId],
+  );
+  return r.rows[0] ?? null;
 }
 
 export async function requireUser(): Promise<UserRow> {
@@ -79,37 +92,38 @@ export async function createUser(
   name?: string,
   isDemo = false,
 ): Promise<UserRow> {
-  const db = getDb();
+  await ready();
   const hash = await bcrypt.hash(password, 10);
   const now = Date.now();
-  const result = db
-    .prepare(
-      "INSERT INTO users(email, password_hash, name, is_demo, created_at) VALUES (?, ?, ?, ?, ?)",
-    )
-    .run(email.toLowerCase().trim(), hash, name ?? null, isDemo ? 1 : 0, now);
-  return db
-    .prepare("SELECT * FROM users WHERE id = ?")
-    .get(result.lastInsertRowid) as UserRow;
+  const r = await getPool().query<UserRow>(
+    `INSERT INTO users(email, password_hash, name, is_demo, created_at)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING *`,
+    [email.toLowerCase().trim(), hash, name ?? null, isDemo ? 1 : 0, now],
+  );
+  return r.rows[0];
 }
 
 export async function verifyCredentials(
   email: string,
   password: string,
 ): Promise<UserRow | null> {
-  const db = getDb();
-  const user = db
-    .prepare("SELECT * FROM users WHERE email = ?")
-    .get(email.toLowerCase().trim()) as UserRow | undefined;
+  await ready();
+  const r = await getPool().query<UserRow>(
+    "SELECT * FROM users WHERE email = $1",
+    [email.toLowerCase().trim()],
+  );
+  const user = r.rows[0];
   if (!user) return null;
   const ok = await bcrypt.compare(password, user.password_hash);
   return ok ? user : null;
 }
 
-export function findUserByEmail(email: string): UserRow | null {
-  const db = getDb();
-  return (
-    (db
-      .prepare("SELECT * FROM users WHERE email = ?")
-      .get(email.toLowerCase().trim()) as UserRow | undefined) ?? null
+export async function findUserByEmail(email: string): Promise<UserRow | null> {
+  await ready();
+  const r = await getPool().query<UserRow>(
+    "SELECT * FROM users WHERE email = $1",
+    [email.toLowerCase().trim()],
   );
+  return r.rows[0] ?? null;
 }

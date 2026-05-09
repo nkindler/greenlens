@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { getDb } from "@/lib/db";
+import { getPool, ready } from "@/lib/db";
 import { listUserDecks } from "@/lib/insights";
 
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
-  const decks = listUserDecks(user.id);
+  const decks = await listUserDecks(user.id);
   return NextResponse.json({ decks });
 }
 
@@ -18,16 +18,15 @@ export async function POST(req: NextRequest) {
   if (!a || typeof a !== "object") {
     return NextResponse.json({ error: "missing analysis" }, { status: 400 });
   }
-  const db = getDb();
-  const result = db
-    .prepare(
-      `INSERT INTO decks(
-        user_id, company_name, technology_type, location, investment_size,
-        stage, founder_profile, geography, overall_score, recommendation,
-        analysis_json, decision, outcome, created_at
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,'looking','unknown',?)`,
-    )
-    .run(
+  await ready();
+  const result = await getPool().query<{ id: number }>(
+    `INSERT INTO decks(
+       user_id, company_name, technology_type, location, investment_size,
+       stage, founder_profile, geography, overall_score, recommendation,
+       analysis_json, decision, outcome, created_at
+     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'looking','unknown',$12)
+     RETURNING id`,
+    [
       user.id,
       a.project_name ?? "Untitled deal",
       a.technology_type ?? null,
@@ -40,6 +39,7 @@ export async function POST(req: NextRequest) {
       a.recommendation ?? null,
       JSON.stringify(a),
       Date.now(),
-    );
-  return NextResponse.json({ ok: true, id: result.lastInsertRowid });
+    ],
+  );
+  return NextResponse.json({ ok: true, id: result.rows[0].id });
 }

@@ -13,7 +13,7 @@ export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const decks = listUserDecks(user.id);
+  const decks = await listUserDecks(user.id);
   const model = computeModel(decks);
   const blindspots = computeBlindspots(decks);
 

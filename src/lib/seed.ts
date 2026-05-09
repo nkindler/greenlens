@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { getDb } from "./db";
+import { getPool, ready, type UserRow } from "./db";
 import { findUserByEmail } from "./auth";
 
 const DEMO_EMAIL = "demo@deckranker.io";
@@ -653,41 +653,38 @@ const SEED_DECKS: SeedDeck[] = [
   },
 ];
 
-export function ensureDemoUserSeeded() {
-  const db = getDb();
+export async function ensureDemoUserSeeded(): Promise<UserRow> {
+  await ready();
+  const pool = getPool();
   const DEMO_HASH = bcrypt.hashSync(DEMO_PASSWORD, 10);
 
-  const existing = findUserByEmail(DEMO_EMAIL);
+  const existing = await findUserByEmail(DEMO_EMAIL);
   let targetUserId: number;
   if (existing) {
-    // Refresh password hash every call so demo creds always work
-    db.prepare(
-      "UPDATE users SET password_hash = ?, name = ?, is_demo = 1 WHERE id = ?",
-    ).run(DEMO_HASH, "Demo Investor", existing.id);
+    // Refresh password hash every call so demo creds always work.
+    await pool.query(
+      "UPDATE users SET password_hash = $1, name = $2, is_demo = 1 WHERE id = $3",
+      [DEMO_HASH, "Demo Investor", existing.id],
+    );
     targetUserId = existing.id;
-    const count = db
-      .prepare("SELECT COUNT(*) as c FROM decks WHERE user_id = ?")
-      .get(targetUserId) as { c: number };
-    if (count.c > 0) return findUserByEmail(DEMO_EMAIL)!;
+    const count = await pool.query<{ c: string }>(
+      "SELECT COUNT(*)::text AS c FROM decks WHERE user_id = $1",
+      [targetUserId],
+    );
+    if (parseInt(count.rows[0].c, 10) > 0) {
+      return (await findUserByEmail(DEMO_EMAIL))!;
+    }
   } else {
-    const insertUser = db
-      .prepare(
-        "INSERT INTO users(email, password_hash, name, is_demo, created_at) VALUES (?, ?, ?, 1, ?)",
-      )
-      .run(DEMO_EMAIL, DEMO_HASH, "Demo Investor", Date.now());
-    targetUserId = insertUser.lastInsertRowid as number;
+    const insertUser = await pool.query<{ id: number }>(
+      `INSERT INTO users(email, password_hash, name, is_demo, created_at)
+       VALUES ($1, $2, $3, 1, $4)
+       RETURNING id`,
+      [DEMO_EMAIL, DEMO_HASH, "Demo Investor", Date.now()],
+    );
+    targetUserId = insertUser.rows[0].id;
   }
 
-  db.prepare("DELETE FROM decks WHERE user_id = ?").run(targetUserId);
-
-  const insert = db.prepare(`
-    INSERT INTO decks(
-      user_id, company_name, technology_type, location, investment_size,
-      stage, founder_profile, geography, overall_score, recommendation,
-      analysis_json, decision, decision_at, decision_notes,
-      outcome, outcome_updated_at, outcome_evidence, created_at
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-  `);
+  await pool.query("DELETE FROM decks WHERE user_id = $1", [targetUserId]);
 
   const now = Date.now();
   for (const seed of SEED_DECKS) {
@@ -705,29 +702,37 @@ export function ensureDemoUserSeeded() {
       investment_memo: seed.investment_memo,
       questions_for_management: seed.questions_for_management,
     };
-    insert.run(
-      targetUserId,
-      seed.company_name,
-      seed.technology_type,
-      seed.location,
-      seed.investment_size,
-      seed.stage,
-      seed.founder_profile,
-      seed.geography,
-      seed.overall_score,
-      seed.recommendation,
-      JSON.stringify(analysis),
-      seed.decision,
-      seed.decision === "looking" ? null : createdAt + 86400 * 1000,
-      seed.decision_notes ?? null,
-      seed.outcome,
-      seed.outcome === "unknown" ? null : createdAt + 60 * 86400 * 1000,
-      seed.outcome_evidence ?? null,
-      createdAt,
+    await pool.query(
+      `INSERT INTO decks(
+         user_id, company_name, technology_type, location, investment_size,
+         stage, founder_profile, geography, overall_score, recommendation,
+         analysis_json, decision, decision_at, decision_notes,
+         outcome, outcome_updated_at, outcome_evidence, created_at
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
+      [
+        targetUserId,
+        seed.company_name,
+        seed.technology_type,
+        seed.location,
+        seed.investment_size,
+        seed.stage,
+        seed.founder_profile,
+        seed.geography,
+        seed.overall_score,
+        seed.recommendation,
+        JSON.stringify(analysis),
+        seed.decision,
+        seed.decision === "looking" ? null : createdAt + 86400 * 1000,
+        seed.decision_notes ?? null,
+        seed.outcome,
+        seed.outcome === "unknown" ? null : createdAt + 60 * 86400 * 1000,
+        seed.outcome_evidence ?? null,
+        createdAt,
+      ],
     );
   }
 
-  return findUserByEmail(DEMO_EMAIL)!;
+  return (await findUserByEmail(DEMO_EMAIL))!;
 }
 
 export const DEMO_CREDENTIALS = {
