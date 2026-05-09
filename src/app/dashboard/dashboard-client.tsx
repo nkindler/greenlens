@@ -88,6 +88,12 @@ function severityStyle(s: Blindspot["severity"]) {
   return "border-card-border bg-card/50";
 }
 
+function severityChipStyle(s: Blindspot["severity"]) {
+  if (s === "high") return "bg-red-500/15 text-red-400 border-red-500/30";
+  if (s === "medium") return "bg-yellow-500/10 text-yellow-400 border-yellow-500/30";
+  return "bg-card-border/50 text-muted border-card-border";
+}
+
 function blindspotIcon(kind: Blindspot["kind"]) {
   if (kind === "missed_win") return <TrendingUp className="w-4 h-4 text-emerald-400" />;
   if (kind === "value_trap") return <TrendingDown className="w-4 h-4 text-red-400" />;
@@ -284,7 +290,9 @@ export function DashboardClient({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-3 mb-1">
                         <h3 className="font-medium text-sm">{b.title}</h3>
-                        <span className="text-[10px] uppercase tracking-wider text-muted shrink-0">
+                        <span
+                          className={`text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0 border ${severityChipStyle(b.severity)}`}
+                        >
                           {b.severity}
                         </span>
                       </div>
