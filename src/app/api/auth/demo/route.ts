@@ -7,3 +7,11 @@ export async function POST() {
   await setSession(user.id);
   return NextResponse.json({ ok: true });
 }
+
+// Shareable demo entry: GET /api/auth/demo creates a session and lands on the dashboard.
+export async function GET(req: Request) {
+  const user = ensureDemoUserSeeded();
+  await setSession(user.id);
+  const url = new URL("/dashboard", req.url);
+  return NextResponse.redirect(url, 303);
+}
