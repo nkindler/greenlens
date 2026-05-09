@@ -3,7 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Leaf, Loader2, Sparkles } from "lucide-react";
+import {
+  Brain,
+  CheckCircle,
+  Clock,
+  Leaf,
+  Loader2,
+  Sparkles,
+  TrendingUp,
+  XCircle,
+} from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -47,21 +56,28 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10">
-      <div className="w-full max-w-sm">
-        <Link href="/" className="flex items-center gap-3 justify-center mb-8">
-          <div className="w-9 h-9 rounded-lg bg-accent/20 flex items-center justify-center">
+    <AuthShell>
+      <div>
+        <Link href="/" className="flex items-center gap-2.5 mb-10">
+          <div className="w-9 h-9 rounded-lg bg-accent/15 border border-accent/20 flex items-center justify-center">
             <Leaf className="w-5 h-5 text-accent" />
           </div>
-          <span className="text-xl font-semibold tracking-tight">
+          <span className="text-lg font-semibold tracking-tight">
             Deck<span className="text-accent">Ranker</span>
           </span>
         </Link>
 
+        <h1 className="text-3xl font-semibold tracking-tight mb-1">
+          Welcome back.
+        </h1>
+        <p className="text-muted mb-8">
+          Sign in to your portfolio, or jump straight into the demo investor.
+        </p>
+
         <button
           onClick={handleDemo}
           disabled={loading !== null}
-          className="w-full mb-4 py-3 px-4 bg-accent hover:bg-accent-light disabled:opacity-50 text-background font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+          className="w-full mb-3 py-3 px-4 bg-accent hover:bg-accent-light disabled:opacity-50 text-background font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
         >
           {loading === "demo" ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -70,13 +86,15 @@ export default function LoginPage() {
           )}
           Try the demo investor
         </button>
-        <p className="text-xs text-muted text-center mb-8">
-          Pre-seeded portfolio, real model insights, no signup.
+        <p className="text-xs text-muted mb-8">
+          15 pre-evaluated decks, real model insights. No signup.
         </p>
 
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-5">
           <div className="flex-1 h-px bg-card-border" />
-          <span className="text-xs text-muted">or sign in</span>
+          <span className="text-[11px] uppercase tracking-wider text-muted">
+            or sign in
+          </span>
           <div className="flex-1 h-px bg-card-border" />
         </div>
 
@@ -87,7 +105,7 @@ export default function LoginPage() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-card border border-card-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50"
+            className="w-full bg-card border border-card-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20"
           />
           <input
             type="password"
@@ -95,28 +113,149 @@ export default function LoginPage() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-card border border-card-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50"
+            className="w-full bg-card border border-card-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20"
           />
-          {error && (
-            <p className="text-sm text-red-400">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-400">{error}</p>}
           <button
             type="submit"
             disabled={loading !== null}
-            className="w-full py-3 px-4 bg-card border border-card-border hover:border-accent/50 disabled:opacity-50 text-foreground font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 px-4 bg-card border border-card-border hover:border-foreground/30 disabled:opacity-50 text-foreground font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
           >
             {loading === "login" && <Loader2 className="w-4 h-4 animate-spin" />}
             Sign in
           </button>
         </form>
 
-        <p className="text-sm text-muted text-center mt-6">
+        <p className="text-sm text-muted mt-6">
           New here?{" "}
           <Link href="/signup" className="text-accent hover:text-accent-light">
             Create an account
           </Link>
         </p>
       </div>
+    </AuthShell>
+  );
+}
+
+function AuthShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 50% at 70% 0%, rgba(16,185,129,0.10), transparent 60%)",
+        }}
+      />
+      <div className="relative grid lg:grid-cols-[minmax(380px,520px)_1fr] min-h-screen">
+        <div className="flex items-center justify-center px-6 py-12 lg:py-10 border-r border-card-border/60">
+          <div className="w-full max-w-sm">{children}</div>
+        </div>
+        <div className="hidden lg:flex items-center justify-center px-10 py-12">
+          <AuthMarketingPanel />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AuthMarketingPanel() {
+  return (
+    <div className="max-w-md w-full">
+      <p className="text-[11px] uppercase tracking-[0.18em] text-accent mb-5 flex items-center gap-2">
+        <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+        What you get
+      </p>
+      <h2 className="text-2xl font-semibold leading-tight mb-2">
+        A model that gets sharper every time you make a call.
+      </h2>
+      <p className="text-sm text-muted mb-8">
+        Live signals from the demo investor&apos;s portfolio. Yours looks
+        the same after a few decks.
+      </p>
+
+      <div className="bg-card/80 backdrop-blur border border-accent/30 rounded-2xl p-5 mb-3 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)]">
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-accent/15 border border-accent/30 flex items-center justify-center">
+            <Brain className="w-4 h-4 text-accent" />
+          </div>
+          <div>
+            <p className="text-sm font-medium leading-tight">Your investor model</p>
+            <p className="text-[11px] text-muted">Trained on 212 signals</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-3 mb-3">
+          <Stat label="Hit rate" value="40%" />
+          <Stat label="Accuracy" value="56%" accent />
+          <Stat label="Confidence" value="92%" />
+        </div>
+        <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+          <Pill icon={<CheckCircle className="w-3 h-3" />} label="Invested" count={5} tone="accent" />
+          <Pill icon={<XCircle className="w-3 h-3" />} label="Passed" count={7} tone="red" />
+          <Pill icon={<Clock className="w-3 h-3" />} label="Looking" count={3} tone="blue" />
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-background/40 border border-card-border flex items-center justify-center shrink-0">
+            <TrendingUp className="w-4 h-4 text-emerald-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium">You pass on Solar PV winners</p>
+            <p className="text-xs text-muted leading-relaxed mt-0.5">
+              2 Solar PV deals you passed on later succeeded. Reconsider your thesis here.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
+  return (
+    <div>
+      <p className="text-[10px] uppercase tracking-wider text-muted mb-1">{label}</p>
+      <p
+        className={`text-xl font-semibold tabular-nums leading-none ${accent ? "text-accent" : ""}`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function Pill({
+  icon,
+  label,
+  count,
+  tone,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  count: number;
+  tone: "accent" | "red" | "blue";
+}) {
+  const cls = {
+    accent: "bg-accent/10 text-accent border-accent/25",
+    red: "bg-red-500/10 text-red-400 border-red-500/20",
+    blue: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  }[tone];
+  return (
+    <div className={`rounded-md border px-1.5 py-1 ${cls} flex items-center gap-1`}>
+      {icon}
+      <span className="uppercase tracking-wider">{label}</span>
+      <span className="ml-auto font-semibold tabular-nums">{count}</span>
     </div>
   );
 }
