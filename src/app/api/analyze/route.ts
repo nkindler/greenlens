@@ -9,9 +9,12 @@ When given a document, produce a structured investment analysis in the following
 
 {
   "project_name": "Name of the project or company",
-  "technology_type": "e.g. Solar PV, Green Hydrogen, Offshore Wind, Battery Storage, etc.",
+  "technology_type": "e.g. Solar PV, Green Hydrogen, Offshore Wind, Battery Storage, Direct Air Capture, etc.",
   "location": "Geographic location if mentioned",
   "investment_size": "Capital required if mentioned",
+  "stage": "One of: Pre-seed | Seed | Series A | Series B | Series C | Growth — best guess from context",
+  "founder_profile": "One of: Solo | Co-founders | Repeat | Technical | Operator — best guess; default Co-founders if unclear",
+  "geography": "One of: North America | Europe | Asia | LATAM | Middle East | Africa | Global",
   "scores": {
     "technology_readiness": {
       "score": <1-10>,

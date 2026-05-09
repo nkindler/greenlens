@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GreenLens | Clean Energy Investment Analyzer",
+  title: "DeckRanker | Investor pattern intelligence",
   description:
-    "AI-powered analysis for clean energy and green technology investments. Upload a deal document and get an instant investment memo.",
+    "Upload a pitch deck. Track invested vs. passed decisions. DeckRanker learns from your calls and surfaces the patterns and blindspots in your investing thesis.",
 };
 
 export default function RootLayout({
