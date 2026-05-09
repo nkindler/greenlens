@@ -164,10 +164,19 @@ export default async function Landing() {
         </div>
       </main>
 
-      <footer className="relative border-t border-card-border/60 py-6 mt-12">
-        <div className="max-w-6xl mx-auto px-6 text-xs text-muted flex items-center justify-between flex-wrap gap-2">
-          <span>DeckRanker</span>
-          <span>Pattern intelligence for the climate-tech investor</span>
+      <footer className="relative border-t border-card-border/60 py-8 mt-16">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex items-center gap-2.5 mb-2">
+            <div className="w-6 h-6 rounded-md bg-accent/15 border border-accent/20 flex items-center justify-center">
+              <Leaf className="w-3.5 h-3.5 text-accent" />
+            </div>
+            <span className="text-sm font-semibold tracking-tight">
+              Deck<span className="text-accent">Ranker</span>
+            </span>
+          </div>
+          <p className="text-xs text-muted">
+            Pattern intelligence for the climate-tech investor.
+          </p>
         </div>
       </footer>
     </div>
