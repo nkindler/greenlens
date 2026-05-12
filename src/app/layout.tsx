@@ -12,10 +12,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = "https://deckranker.com";
+const siteTitle = "DeckRanker | Investor pattern intelligence";
+const siteDescription =
+  "Upload a pitch deck. Track invested vs. passed decisions. DeckRanker learns from your calls and surfaces the patterns and blindspots in your investing thesis.";
+
 export const metadata: Metadata = {
-  title: "DeckRanker | Investor pattern intelligence",
-  description:
-    "Upload a pitch deck. Track invested vs. passed decisions. DeckRanker learns from your calls and surfaces the patterns and blindspots in your investing thesis.",
+  metadataBase: new URL(siteUrl),
+  title: siteTitle,
+  description: siteDescription,
+  openGraph: {
+    type: "website",
+    url: siteUrl,
+    siteName: "DeckRanker",
+    title: siteTitle,
+    description: siteDescription,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteTitle,
+    description: siteDescription,
+  },
 };
 
 export default function RootLayout({
