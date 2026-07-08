@@ -74,6 +74,7 @@ ${profileBlock}
 
 IMPORTANT:
 - Return ONLY valid JSON, no markdown fencing, no extra text
+- Every item in key_risks, key_strengths, and questions_for_management must be a complete, substantive sentence — never an empty string or placeholder. Always include at least 3 questions_for_management.
 - Be rigorous and honest. Do not inflate scores.
 - If information is missing from the document, note it in the rationale and score conservatively.
 - The overall_score should reflect a weighted view where financial and product/readiness dimensions carry slightly more weight, with the rest equal.`;

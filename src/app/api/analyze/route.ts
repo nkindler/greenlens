@@ -119,6 +119,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // The model occasionally emits blank items in list fields — strip them
+    // so empty rows never reach the report.
+    for (const key of ["key_risks", "key_strengths", "questions_for_management"]) {
+      if (Array.isArray(analysis[key])) {
+        analysis[key] = analysis[key].filter(
+          (x: unknown) => typeof x === "string" && x.trim().length > 0,
+        );
+      }
+    }
+
     return NextResponse.json({ analysis });
   } catch (error: unknown) {
     console.error("Analysis error:", error);

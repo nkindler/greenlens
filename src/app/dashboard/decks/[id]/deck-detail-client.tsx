@@ -118,13 +118,18 @@ export function DeckDetailClient({
   const [evidence, setEvidence] = useState(deck.outcome_evidence ?? "");
   const [savedFlash, setSavedFlash] = useState<"decision" | "outcome" | null>(null);
 
+  // Older analyses can carry empty/whitespace items — drop them so sections
+  // with no real content disappear instead of rendering blank rows.
+  const cleanList = (v: unknown): string[] =>
+    Array.isArray(v)
+      ? v.filter((x): x is string => typeof x === "string" && x.trim().length > 0)
+      : [];
+
   const scores = (analysis.scores ?? {}) as Record<string, Score>;
   const memo = typeof analysis.investment_memo === "string" ? analysis.investment_memo : "";
-  const strengths = Array.isArray(analysis.key_strengths) ? (analysis.key_strengths as string[]) : [];
-  const risks = Array.isArray(analysis.key_risks) ? (analysis.key_risks as string[]) : [];
-  const questions = Array.isArray(analysis.questions_for_management)
-    ? (analysis.questions_for_management as string[])
-    : [];
+  const strengths = cleanList(analysis.key_strengths);
+  const risks = cleanList(analysis.key_risks);
+  const questions = cleanList(analysis.questions_for_management);
 
   const prediction = modelPrediction(deck.overall_score, deck.founder_profile);
   const investorFit = (analysis.investor_fit ?? null) as
