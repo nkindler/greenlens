@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ChevronRight,
-  Leaf,
   Loader2,
   Upload,
 } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 type AnalysisShape = {
   project_name?: string;
@@ -104,14 +104,7 @@ export function UploadClient({ isDemo }: { isDemo: boolean }) {
     <div className="min-h-screen">
       <header className="border-b border-card-border bg-card/40 backdrop-blur-sm sticky top-0 z-30">
         <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
-              <Leaf className="w-5 h-5 text-accent" />
-            </div>
-            <span className="text-lg font-semibold tracking-tight">
-              Deck<span className="text-accent">Ranker</span>
-            </span>
-          </Link>
+          <Logo href="/dashboard" />
           <Link
             href="/dashboard"
             className="text-sm text-muted hover:text-foreground flex items-center gap-1"

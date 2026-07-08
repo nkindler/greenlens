@@ -2,8 +2,11 @@ import bcrypt from "bcryptjs";
 import { getPool, ready, type UserRow } from "./db";
 import { findUserByEmail } from "./auth";
 
-const DEMO_EMAIL = "demo@deckranker.io";
-const DEMO_PASSWORD = "demo";
+// v2 demo account. The old demo (demo@deckranker.io / "demo") is deleted on
+// seed so stale credentials stop working everywhere, including production.
+const DEMO_EMAIL = "demo@deckranker.com";
+const DEMO_PASSWORD = "ranker-demo-2026";
+const LEGACY_DEMO_EMAILS = ["demo@deckranker.io"];
 
 type Decision = "looking" | "invested" | "passed";
 type Outcome = "unknown" | "succeeded" | "failed";
@@ -658,12 +661,18 @@ export async function ensureDemoUserSeeded(): Promise<UserRow> {
   const pool = getPool();
   const DEMO_HASH = bcrypt.hashSync(DEMO_PASSWORD, 10);
 
+  // Remove the retired demo account (cascades its decks).
+  await pool.query("DELETE FROM users WHERE email = ANY($1)", [
+    LEGACY_DEMO_EMAILS,
+  ]);
+
   const existing = await findUserByEmail(DEMO_EMAIL);
   let targetUserId: number;
   if (existing) {
     // Refresh password hash every call so demo creds always work.
+    // 2FA stays off for the demo so the one-click flow keeps working.
     await pool.query(
-      "UPDATE users SET password_hash = $1, name = $2, is_demo = 1 WHERE id = $3",
+      "UPDATE users SET password_hash = $1, name = $2, is_demo = 1, two_factor_enabled = 0 WHERE id = $3",
       [DEMO_HASH, "Demo Investor", existing.id],
     );
     targetUserId = existing.id;
@@ -682,8 +691,8 @@ export async function ensureDemoUserSeeded(): Promise<UserRow> {
     }
   } else {
     const insertUser = await pool.query<{ id: number }>(
-      `INSERT INTO users(email, password_hash, name, is_demo, created_at)
-       VALUES ($1, $2, $3, 1, $4)
+      `INSERT INTO users(email, password_hash, name, is_demo, two_factor_enabled, created_at)
+       VALUES ($1, $2, $3, 1, 0, $4)
        RETURNING id`,
       [DEMO_EMAIL, DEMO_HASH, "Demo Investor", Date.now()],
     );

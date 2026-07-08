@@ -1,21 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Brain,
   CheckCircle,
   Clock,
-  Leaf,
   Loader2,
   Sparkles,
   TrendingUp,
   XCircle,
 } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") || "/dashboard";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +43,11 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Login failed");
-      router.push("/dashboard");
+      if (data.requires2fa) {
+        router.push(`/login/verify?next=${encodeURIComponent(next)}`);
+        return;
+      }
+      router.push(next);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
@@ -58,14 +72,9 @@ export default function LoginPage() {
   return (
     <AuthShell>
       <div>
-        <Link href="/" className="flex items-center gap-2.5 mb-10">
-          <div className="w-9 h-9 rounded-lg bg-accent/15 border border-accent/20 flex items-center justify-center">
-            <Leaf className="w-5 h-5 text-accent" />
-          </div>
-          <span className="text-lg font-semibold tracking-tight">
-            Deck<span className="text-accent">Ranker</span>
-          </span>
-        </Link>
+        <div className="mb-10">
+          <Logo />
+        </div>
 
         <h1 className="text-3xl font-semibold tracking-tight mb-1">
           Welcome back.

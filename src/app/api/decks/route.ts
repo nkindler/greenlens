@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getPool, ready } from "@/lib/db";
-import { listUserDecks } from "@/lib/insights";
+import { listWorkspaceDecks } from "@/lib/insights";
+import { getWorkspace } from "@/lib/orgs";
 
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
-  const decks = await listUserDecks(user.id);
+  const workspace = await getWorkspace(user);
+  const decks = await listWorkspaceDecks(workspace, user.id);
   return NextResponse.json({ decks });
 }
 
@@ -18,16 +20,18 @@ export async function POST(req: NextRequest) {
   if (!a || typeof a !== "object") {
     return NextResponse.json({ error: "missing analysis" }, { status: 400 });
   }
+  const workspace = await getWorkspace(user);
   await ready();
   const result = await getPool().query<{ id: number }>(
     `INSERT INTO decks(
-       user_id, company_name, technology_type, location, investment_size,
+       user_id, org_id, company_name, technology_type, location, investment_size,
        stage, founder_profile, geography, overall_score, recommendation,
        analysis_json, decision, outcome, created_at
-     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'looking','unknown',$12)
+     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'looking','unknown',$13)
      RETURNING id`,
     [
       user.id,
+      workspace.kind === "org" ? workspace.org.id : null,
       a.project_name ?? "Untitled deal",
       a.technology_type ?? null,
       a.location ?? null,

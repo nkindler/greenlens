@@ -2,10 +2,11 @@ import { redirect, notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import {
   findSimilar,
-  getDeck,
-  listUserDecks,
+  getAccessibleDeck,
+  listWorkspaceDecks,
   type SimilarDeck,
 } from "@/lib/insights";
+import { getWorkspace } from "@/lib/orgs";
 import { DeckDetailClient } from "./deck-detail-client";
 
 export const dynamic = "force-dynamic";
@@ -22,10 +23,11 @@ export default async function DeckDetail({
   const deckId = parseInt(id, 10);
   if (!Number.isFinite(deckId)) notFound();
 
-  const deck = await getDeck(user.id, deckId);
+  const deck = await getAccessibleDeck(user.id, deckId);
   if (!deck) notFound();
 
-  const allDecks = await listUserDecks(user.id);
+  const workspace = await getWorkspace(user);
+  const allDecks = await listWorkspaceDecks(workspace, user.id);
   const similar: SimilarDeck[] = findSimilar(deck, allDecks, 4);
 
   let analysis: Record<string, unknown> = {};

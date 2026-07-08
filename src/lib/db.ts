@@ -6,9 +6,7 @@ import { Pool, types } from "pg";
 types.setTypeParser(20, (v) => (v === null ? null : parseInt(v, 10)));
 
 declare global {
-  // eslint-disable-next-line no-var
   var __dr_pool: Pool | undefined;
-  // eslint-disable-next-line no-var
   var __dr_ready: Promise<void> | undefined;
 }
 
@@ -43,6 +41,9 @@ const SCHEMA = `
     created_at BIGINT NOT NULL
   );
 
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_enabled INTEGER DEFAULT 1;
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS settings_json TEXT;
+
   CREATE TABLE IF NOT EXISTS decks (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -65,8 +66,67 @@ const SCHEMA = `
     created_at BIGINT NOT NULL
   );
 
+  ALTER TABLE decks ADD COLUMN IF NOT EXISTS org_id BIGINT;
+
   CREATE INDEX IF NOT EXISTS idx_decks_user ON decks(user_id);
   CREATE INDEX IF NOT EXISTS idx_decks_decision ON decks(user_id, decision);
+  CREATE INDEX IF NOT EXISTS idx_decks_org ON decks(org_id);
+
+  -- Short-lived email verification codes (2FA login challenges).
+  CREATE TABLE IF NOT EXISTS login_codes (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    code_hash TEXT NOT NULL,
+    expires_at BIGINT NOT NULL,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    consumed INTEGER NOT NULL DEFAULT 0,
+    created_at BIGINT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_login_codes_user ON login_codes(user_id);
+
+  CREATE TABLE IF NOT EXISTS orgs (
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    created_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    created_at BIGINT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS org_members (
+    org_id BIGINT NOT NULL REFERENCES orgs(id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role TEXT NOT NULL DEFAULT 'member',
+    created_at BIGINT NOT NULL,
+    PRIMARY KEY (org_id, user_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS org_invites (
+    id BIGSERIAL PRIMARY KEY,
+    org_id BIGINT NOT NULL REFERENCES orgs(id) ON DELETE CASCADE,
+    email TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'member',
+    token TEXT UNIQUE NOT NULL,
+    invited_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    expires_at BIGINT NOT NULL,
+    accepted_at BIGINT,
+    created_at BIGINT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_org_invites_email ON org_invites(email);
+
+  -- Learned investor preference profiles, one per workspace
+  -- (user_id set for personal workspaces, org_id for org workspaces).
+  CREATE TABLE IF NOT EXISTS preference_profiles (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    org_id BIGINT REFERENCES orgs(id) ON DELETE CASCADE,
+    profile_md TEXT NOT NULL,
+    stats_json TEXT,
+    trained_at BIGINT NOT NULL
+  );
+
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_pref_user ON preference_profiles(user_id) WHERE user_id IS NOT NULL;
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_pref_org ON preference_profiles(org_id) WHERE org_id IS NOT NULL;
 `;
 
 // Lazy schema init; idempotent. Called from query sites via `await ready()`.
@@ -81,6 +141,7 @@ export async function ready(): Promise<void> {
 export type DeckRow = {
   id: number;
   user_id: number;
+  org_id: number | null;
   company_name: string;
   technology_type: string | null;
   location: string | null;
@@ -106,5 +167,42 @@ export type UserRow = {
   password_hash: string;
   name: string | null;
   is_demo: number;
+  two_factor_enabled: number;
+  settings_json: string | null;
   created_at: number;
+};
+
+export type OrgRow = {
+  id: number;
+  name: string;
+  created_by: number | null;
+  created_at: number;
+};
+
+export type OrgMemberRow = {
+  org_id: number;
+  user_id: number;
+  role: "owner" | "admin" | "member";
+  created_at: number;
+};
+
+export type OrgInviteRow = {
+  id: number;
+  org_id: number;
+  email: string;
+  role: "admin" | "member";
+  token: string;
+  invited_by: number | null;
+  expires_at: number;
+  accepted_at: number | null;
+  created_at: number;
+};
+
+export type PreferenceProfileRow = {
+  id: number;
+  user_id: number | null;
+  org_id: number | null;
+  profile_md: string;
+  stats_json: string | null;
+  trained_at: number;
 };

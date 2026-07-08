@@ -4,7 +4,11 @@ import bcrypt from "bcryptjs";
 import { getPool, ready, type UserRow } from "./db";
 
 const COOKIE_NAME = "dr_session";
+const PENDING_2FA_COOKIE = "dr_pending_2fa";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 30;
+const PENDING_2FA_MAX_AGE = 60 * 10;
+const LOGIN_CODE_TTL_MS = 10 * 60 * 1000;
+const LOGIN_CODE_MAX_ATTEMPTS = 5;
 const DEV_FALLBACK_SECRET =
   "deckranker-dev-secret-replace-in-prod-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
@@ -126,4 +130,111 @@ export async function findUserByEmail(email: string): Promise<UserRow | null> {
     [email.toLowerCase().trim()],
   );
   return r.rows[0] ?? null;
+}
+
+// ---- Email 2FA ----
+// Login is a two-step handshake when 2FA is on: password check issues a
+// short-lived signed "pending" cookie plus an emailed 6-digit code; the
+// verify step exchanges both for a real session.
+
+export async function setPending2fa(userId: number) {
+  const cookieStore = await cookies();
+  const expiresAt = Date.now() + PENDING_2FA_MAX_AGE * 1000;
+  cookieStore.set(PENDING_2FA_COOKIE, sign(`${userId}:${expiresAt}`), {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: PENDING_2FA_MAX_AGE,
+    secure: process.env.NODE_ENV === "production",
+  });
+}
+
+export async function getPending2faUserId(): Promise<number | null> {
+  const cookieStore = await cookies();
+  const raw = cookieStore.get(PENDING_2FA_COOKIE)?.value;
+  if (!raw) return null;
+  const value = verify(raw);
+  if (!value) return null;
+  const [idStr, expStr] = value.split(":");
+  const userId = parseInt(idStr, 10);
+  const expiresAt = parseInt(expStr, 10);
+  if (!Number.isFinite(userId) || !Number.isFinite(expiresAt)) return null;
+  if (Date.now() > expiresAt) return null;
+  return userId;
+}
+
+export async function clearPending2fa() {
+  const cookieStore = await cookies();
+  cookieStore.delete(PENDING_2FA_COOKIE);
+}
+
+function hashCode(code: string): string {
+  return crypto
+    .createHmac("sha256", getSessionSecret())
+    .update(code)
+    .digest("hex");
+}
+
+export async function issueLoginCode(userId: number): Promise<string> {
+  await ready();
+  const pool = getPool();
+  const code = crypto.randomInt(0, 1000000).toString().padStart(6, "0");
+  // One active code per user: new code replaces any outstanding one.
+  await pool.query("DELETE FROM login_codes WHERE user_id = $1", [userId]);
+  await pool.query(
+    `INSERT INTO login_codes(user_id, code_hash, expires_at, created_at)
+     VALUES ($1, $2, $3, $4)`,
+    [userId, hashCode(code), Date.now() + LOGIN_CODE_TTL_MS, Date.now()],
+  );
+  return code;
+}
+
+export async function verifyLoginCode(
+  userId: number,
+  code: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await ready();
+  const pool = getPool();
+  const r = await pool.query<{
+    id: number;
+    code_hash: string;
+    expires_at: number;
+    attempts: number;
+    consumed: number;
+  }>(
+    "SELECT id, code_hash, expires_at, attempts, consumed FROM login_codes WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1",
+    [userId],
+  );
+  const row = r.rows[0];
+  if (!row || row.consumed) {
+    return { ok: false, error: "No active code. Request a new one." };
+  }
+  if (Date.now() > row.expires_at) {
+    return { ok: false, error: "Code expired. Request a new one." };
+  }
+  if (row.attempts >= LOGIN_CODE_MAX_ATTEMPTS) {
+    return { ok: false, error: "Too many attempts. Request a new code." };
+  }
+  await pool.query("UPDATE login_codes SET attempts = attempts + 1 WHERE id = $1", [
+    row.id,
+  ]);
+  const expected = Buffer.from(row.code_hash);
+  const actual = Buffer.from(hashCode(code.trim()));
+  if (
+    expected.length !== actual.length ||
+    !crypto.timingSafeEqual(expected, actual)
+  ) {
+    return { ok: false, error: "Incorrect code." };
+  }
+  await pool.query("UPDATE login_codes SET consumed = 1 WHERE id = $1", [row.id]);
+  return { ok: true };
+}
+
+export async function updatePassword(userId: number, newPassword: string) {
+  await ready();
+  const hash = await bcrypt.hash(newPassword, 10);
+  await getPool().query("UPDATE users SET password_hash = $1 WHERE id = $2", [
+    hash,
+    userId,
+  ]);
 }

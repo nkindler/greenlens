@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getPool, ready } from "@/lib/db";
+import { getAccessibleDeck } from "@/lib/insights";
 
 export async function POST(
   req: NextRequest,
@@ -17,14 +18,15 @@ export async function POST(
   if (!["unknown", "succeeded", "failed"].includes(outcome)) {
     return NextResponse.json({ error: "invalid outcome" }, { status: 400 });
   }
-  await ready();
-  const result = await getPool().query(
-    `UPDATE decks SET outcome = $1, outcome_updated_at = $2, outcome_evidence = $3
-     WHERE id = $4 AND user_id = $5`,
-    [outcome, Date.now(), evidence ?? null, deckId, user.id],
-  );
-  if (result.rowCount === 0) {
+  const deck = await getAccessibleDeck(user.id, deckId);
+  if (!deck) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
+  await ready();
+  await getPool().query(
+    `UPDATE decks SET outcome = $1, outcome_updated_at = $2, outcome_evidence = $3
+     WHERE id = $4`,
+    [outcome, Date.now(), evidence ?? null, deckId],
+  );
   return NextResponse.json({ ok: true });
 }

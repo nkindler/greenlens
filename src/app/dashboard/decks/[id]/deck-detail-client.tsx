@@ -22,6 +22,7 @@ import {
   Globe,
   BarChart3,
 } from "lucide-react";
+import { Logo } from "@/components/logo";
 import type { SimilarDeck } from "@/lib/insights";
 
 type DeckLite = {
@@ -55,6 +56,16 @@ const SCORE_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
   technology_readiness: { label: "Technology Readiness", icon: <Zap className="w-4 h-4" /> },
   carbon_impact: { label: "Carbon Impact", icon: <Leaf className="w-4 h-4" /> },
 };
+
+// Custom rubric dimensions won't be in the map — prettify the key instead.
+function scoreMeta(key: string): { label: string; icon: React.ReactNode } {
+  if (SCORE_LABELS[key]) return SCORE_LABELS[key];
+  const label = key
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+  return { label, icon: <BarChart3 className="w-4 h-4" /> };
+}
 
 function getScoreColor(score: number): string {
   if (score >= 8) return "bg-emerald-500";
@@ -116,6 +127,9 @@ export function DeckDetailClient({
     : [];
 
   const prediction = modelPrediction(deck.overall_score, deck.founder_profile);
+  const investorFit = (analysis.investor_fit ?? null) as
+    | { score: number; rationale: string }
+    | null;
 
   function saveDecision(next: typeof decision) {
     setDecision(next);
@@ -173,14 +187,7 @@ export function DeckDetailClient({
     <div className="min-h-screen">
       <header className="border-b border-card-border bg-card/40 backdrop-blur-sm sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
-              <Leaf className="w-5 h-5 text-accent" />
-            </div>
-            <span className="text-lg font-semibold tracking-tight">
-              Deck<span className="text-accent">Ranker</span>
-            </span>
-          </Link>
+          <Logo href="/dashboard" />
           <Link
             href="/dashboard"
             className="text-sm text-muted hover:text-foreground flex items-center gap-1"
@@ -217,35 +224,75 @@ export function DeckDetailClient({
           </div>
         </div>
 
-        {/* Model prediction */}
-        <div className="bg-card/70 border border-accent/30 rounded-2xl p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-lg bg-accent/15 border border-accent/30 flex items-center justify-center">
-              <Brain className="w-4 h-4 text-accent" />
+        {/* Model prediction / trained investor fit */}
+        {investorFit ? (
+          <div className="bg-card/70 border border-accent/30 rounded-2xl p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-lg bg-accent/15 border border-accent/30 flex items-center justify-center">
+                <Brain className="w-4 h-4 text-accent" />
+              </div>
+              <div>
+                <h3 className="font-medium text-sm">
+                  Fit with your trained preference model
+                </h3>
+                <p className="text-xs text-muted">
+                  Scored against what you invest in, pass on, and win with
+                </p>
+              </div>
+              <div className="ml-auto text-right">
+                <p className="text-2xl font-bold tabular-nums text-accent">
+                  {investorFit.score}/10
+                </p>
+                <p className="text-xs text-muted">investor fit</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-medium text-sm">Your model on this deal</h3>
-              <p className="text-xs text-muted">
-                Based on {similar.length} similar past evaluations in your portfolio
-              </p>
+            <div className="h-2 bg-card-border rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-accent to-accent-light"
+                style={{ width: `${investorFit.score * 10}%` }}
+              />
             </div>
-            <div className="ml-auto text-right">
-              <p className="text-2xl font-bold tabular-nums text-accent">
-                {Math.round(prediction.pct * 100)}%
-              </p>
-              <p className="text-xs text-muted">predicted to invest</p>
-            </div>
+            <p className="text-xs text-muted mt-2 leading-relaxed">
+              {investorFit.rationale}
+            </p>
           </div>
-          <div className="h-2 bg-card-border rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-accent to-accent-light"
-              style={{ width: `${Math.round(prediction.pct * 100)}%` }}
-            />
+        ) : (
+          <div className="bg-card/70 border border-accent/30 rounded-2xl p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-lg bg-accent/15 border border-accent/30 flex items-center justify-center">
+                <Brain className="w-4 h-4 text-accent" />
+              </div>
+              <div>
+                <h3 className="font-medium text-sm">Your model on this deal</h3>
+                <p className="text-xs text-muted">
+                  Based on {similar.length} similar past evaluations in your portfolio
+                </p>
+              </div>
+              <div className="ml-auto text-right">
+                <p className="text-2xl font-bold tabular-nums text-accent">
+                  {Math.round(prediction.pct * 100)}%
+                </p>
+                <p className="text-xs text-muted">predicted to invest</p>
+              </div>
+            </div>
+            <div className="h-2 bg-card-border rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-accent to-accent-light"
+                style={{ width: `${Math.round(prediction.pct * 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-muted mt-2 italic">
+              {prediction.label}. Adjusted for {deck.founder_profile ?? "founder profile"} bias and stage trend.{" "}
+              <Link
+                href="/dashboard/settings#training"
+                className="text-accent hover:text-accent-light not-italic"
+              >
+                Train your model
+              </Link>{" "}
+              for deal-specific fit scoring.
+            </p>
           </div>
-          <p className="text-xs text-muted mt-2 italic">
-            {prediction.label}. Adjusted for {deck.founder_profile ?? "founder profile"} bias and stage trend.
-          </p>
-        </div>
+        )}
 
         {/* Decision */}
         <div className="bg-card border border-card-border rounded-2xl p-5">
@@ -410,8 +457,8 @@ export function DeckDetailClient({
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {Object.entries(scores).map(([key, value]) => {
-                const meta = SCORE_LABELS[key];
-                if (!meta) return null;
+                const meta = scoreMeta(key);
+                if (typeof value?.score !== "number") return null;
                 return (
                   <div key={key} className="bg-card border border-card-border rounded-xl p-4">
                     <div className="flex items-center justify-between mb-2">

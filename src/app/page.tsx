@@ -5,13 +5,13 @@ import {
   Brain,
   CheckCircle,
   Clock,
-  Leaf,
   Sparkles,
   TrendingDown,
   TrendingUp,
   XCircle,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
+import { Logo } from "@/components/logo";
 
 export const dynamic = "force-dynamic";
 
@@ -44,14 +44,7 @@ export default async function Landing() {
 
       <header className="relative border-b border-card-border/60 bg-background/40 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-accent/15 border border-accent/20 flex items-center justify-center">
-              <Leaf className="w-5 h-5 text-accent" />
-            </div>
-            <span className="text-lg font-semibold tracking-tight">
-              Deck<span className="text-accent">Ranker</span>
-            </span>
-          </div>
+          <Logo />
           <div className="flex items-center gap-1">
             <Link
               href="/login"
@@ -168,14 +161,16 @@ export default async function Landing() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex items-center gap-2.5 mb-2">
             <div className="w-6 h-6 rounded-md bg-accent/15 border border-accent/20 flex items-center justify-center">
-              <Leaf className="w-3.5 h-3.5 text-accent" />
+              <TrendingUp className="w-3.5 h-3.5 text-accent" />
             </div>
             <span className="text-sm font-semibold tracking-tight">
               Deck<span className="text-accent">Ranker</span>
             </span>
           </div>
           <p className="text-xs text-muted">
-            Pattern intelligence for the modern investor. Any sector, any stage.
+            Pattern intelligence for the modern investor. Any sector, any
+            stage. Shared team dashboards, email two-factor security, and a
+            preference model trained on your own track record.
           </p>
         </div>
       </footer>

@@ -1,4 +1,5 @@
 import { getPool, ready, type DeckRow } from "./db";
+import type { Workspace } from "./orgs";
 
 export type InvestorModel = {
   totalDecks: number;
@@ -45,6 +46,26 @@ export async function listUserDecks(userId: number): Promise<DeckRow[]> {
   return r.rows;
 }
 
+// Decks visible in the active workspace: personal decks stay private to
+// their owner; org decks are shared with every member.
+export async function listWorkspaceDecks(
+  workspace: Workspace,
+  userId: number,
+): Promise<DeckRow[]> {
+  await ready();
+  const r =
+    workspace.kind === "org"
+      ? await getPool().query<DeckRow>(
+          "SELECT * FROM decks WHERE org_id = $1 ORDER BY created_at DESC",
+          [workspace.org.id],
+        )
+      : await getPool().query<DeckRow>(
+          "SELECT * FROM decks WHERE user_id = $1 AND org_id IS NULL ORDER BY created_at DESC",
+          [userId],
+        );
+  return r.rows;
+}
+
 export async function getDeck(
   userId: number,
   deckId: number,
@@ -52,6 +73,27 @@ export async function getDeck(
   await ready();
   const r = await getPool().query<DeckRow>(
     "SELECT * FROM decks WHERE id = $1 AND user_id = $2",
+    [deckId, userId],
+  );
+  return r.rows[0] ?? null;
+}
+
+// A deck is accessible if you created it or it belongs to an org you're in.
+// Org members share full read/update rights on org decks.
+export async function getAccessibleDeck(
+  userId: number,
+  deckId: number,
+): Promise<DeckRow | null> {
+  await ready();
+  const r = await getPool().query<DeckRow>(
+    `SELECT d.* FROM decks d
+     WHERE d.id = $1
+       AND (
+         d.user_id = $2
+         OR (d.org_id IS NOT NULL AND EXISTS (
+           SELECT 1 FROM org_members m WHERE m.org_id = d.org_id AND m.user_id = $2
+         ))
+       )`,
     [deckId, userId],
   );
   return r.rows[0] ?? null;

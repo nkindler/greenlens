@@ -1,20 +1,30 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Brain,
   CheckCircle,
   Clock,
-  Leaf,
   Loader2,
   TrendingUp,
   XCircle,
 } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
+  );
+}
+
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") || "/dashboard";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -33,7 +43,7 @@ export default function SignupPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Signup failed");
-      router.push("/dashboard");
+      router.push(next);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed");
@@ -44,14 +54,9 @@ export default function SignupPage() {
   return (
     <AuthShell>
       <div>
-        <Link href="/" className="flex items-center gap-2.5 mb-10">
-          <div className="w-9 h-9 rounded-lg bg-accent/15 border border-accent/20 flex items-center justify-center">
-            <Leaf className="w-5 h-5 text-accent" />
-          </div>
-          <span className="text-lg font-semibold tracking-tight">
-            Deck<span className="text-accent">Ranker</span>
-          </span>
-        </Link>
+        <div className="mb-10">
+          <Logo />
+        </div>
 
         <h1 className="text-3xl font-semibold tracking-tight mb-1">
           Create your account.
@@ -101,6 +106,10 @@ export default function SignupPage() {
           <Link href="/login" className="text-accent hover:text-accent-light">
             Sign in
           </Link>
+        </p>
+        <p className="text-xs text-muted mt-4">
+          Accounts are protected with email two-factor authentication. You can
+          manage it later in Settings.
         </p>
       </div>
     </AuthShell>
